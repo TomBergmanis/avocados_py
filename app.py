@@ -1,16 +1,19 @@
-# app.py
-
+# Importing necessary libraries
 import pandas as pd
 from dash import Dash, Input, Output, dcc, html
 
+# Read the data from CSV and preprocess
 data = (
     pd.read_csv("avocado.csv")
     .assign(Date=lambda data: pd.to_datetime(data["Date"], format="%Y-%m-%d"))
     .sort_values(by="Date")
 )
+
+# Extract unique regions and avocado types
 regions = data["region"].sort_values().unique() 
 avocado_types = data["type"].sort_values().unique()
 
+# External stylesheets for the Dash app
 external_stylesheets = [
     {
         "href": (
@@ -20,11 +23,15 @@ external_stylesheets = [
         "rel": "stylesheet",
     },
 ]
+
+# Initialize the Dash app
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 app.title = "Avocado Analytics: Understand Your Avocados!"
 
+# Layout of the Dash app
 app.layout = html.Div(
     children=[
+        # Header section
         html.Div(
             children=[
                 html.P(children="🥑", className="header-emoji"),
@@ -41,8 +48,10 @@ app.layout = html.Div(
             ],
             className="header",
         ),
+        # Filters section
         html.Div(
             children=[
+                # Region filter
                 html.Div(
                     children=[
                         html.Div(children="Region", className="menu-title"),
@@ -58,6 +67,7 @@ app.layout = html.Div(
                         ),
                     ]
                 ),
+                # Avocado type filter
                 html.Div(
                     children=[
                         html.Div(children="Type", className="menu-title"),
@@ -77,6 +87,7 @@ app.layout = html.Div(
                         ),
                     ],
                 ),
+                # Date range filter
                 html.Div(
                     children=[
                         html.Div(
@@ -94,8 +105,10 @@ app.layout = html.Div(
             ],
             className="menu",
         ),
+        # Charts section
         html.Div(
             children=[
+                # Price chart
                 html.Div(
                     children=dcc.Graph(
                         id="price-chart",
@@ -103,6 +116,7 @@ app.layout = html.Div(
                     ),
                     className="card",
                 ),
+                # Volume chart
                 html.Div(
                     children=dcc.Graph(
                         id="volume-chart",
@@ -116,6 +130,7 @@ app.layout = html.Div(
     ]
 )
 
+# Callback to update charts based on filter inputs
 @app.callback(
     Output("price-chart", "figure"),
     Output("volume-chart", "figure"),
@@ -125,10 +140,12 @@ app.layout = html.Div(
     Input("date-range", "end_date"),
 )
 def update_charts(region, avocado_type, start_date, end_date):
+    # Filter data based on inputs
     filtered_data = data.query(
         "region == @region and type == @avocado_type"
         " and Date >= @start_date and Date <= @end_date"
     )
+    # Price chart figure
     price_chart_figure = {
         "data": [
             {
@@ -149,7 +166,7 @@ def update_charts(region, avocado_type, start_date, end_date):
             "colorway": ["#17B897"],
         },
     }
-
+    # Volume chart figure
     volume_chart_figure = {
         "data": [
             {
@@ -167,5 +184,6 @@ def update_charts(region, avocado_type, start_date, end_date):
     }
     return price_chart_figure, volume_chart_figure
 
+# Run the app
 if __name__ == "__main__":
     app.run_server(debug=True)
